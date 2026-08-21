@@ -21,7 +21,7 @@ commentaryRouter.get('/', async (req, res) => {
         return res.status(400).json({ error: 'Invalid Query!', details: parsedQuery.error.issues });
     }
 
-    const limit = Math.min(parsedQuery.data.limit ?? 10, MAX_LIMIT);
+    const limit = Math.min(parsedQuery.data.limit ?? MAX_LIMIT, MAX_LIMIT);
 
     try {
         const data = await db
