@@ -27,7 +27,7 @@ app.locals.broadcastMatchCreated = broadcastMatchCreated;
 app.locals.broadcastCommentary = broadcastCommentary;
 
 server.listen(port, host, () => {
-	const baseUrl = host === '0.0.0.0' ? `http://localhost:${port}` : `http://${host}:${port}`;
+	const baseUrl = process.env.RENDER_EXTERNAL_URL || (host === '0.0.0.0' ? `http://localhost:${port}` : `http://${host}:${port}`);
 	console.log(`Server is listening at ${baseUrl}`);
 	console.log(`WebSocket Server is listening at ${baseUrl.replace('http', 'ws')}/ws`);
 });
