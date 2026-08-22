@@ -15,9 +15,32 @@ const host = process.env.HOST || '0.0.0.0';
 const app = express();
 const server = http.createServer(app);
 
-const frontendOrigin = process.env.FRONTEND_ORIGIN;
+function parseAllowedOrigins(value) {
+	if (!value || !String(value).trim()) {
+		return null;
+	}
+
+	return String(value)
+		.split(',')
+		.map((origin) => origin.trim().replace(/\/+$/, ''))
+		.filter(Boolean);
+}
+
+const allowedOrigins = parseAllowedOrigins(process.env.FRONTEND_ORIGIN);
+
 app.use(cors({
-	origin: frontendOrigin ? frontendOrigin.split(',').map((value) => value.trim()) : true,
+	origin(origin, callback) {
+		if (!origin || !allowedOrigins) {
+			return callback(null, true);
+		}
+
+		const normalized = origin.replace(/\/+$/, '');
+		if (allowedOrigins.includes(normalized)) {
+			return callback(null, true);
+		}
+
+		return callback(null, false);
+	},
 }));
 app.use(express.json());
 
@@ -68,6 +91,7 @@ server.listen(port, host, async () => {
 	const wsUrl = `${baseUrl.replace(/^http/, 'ws')}/ws`;
 	console.log(`Server is listening at ${baseUrl} (bind ${host}:${port})`);
 	console.log(`WebSocket Server is listening at ${wsUrl}`);
+	console.log(`CORS allowed origins: ${allowedOrigins ? allowedOrigins.join(', ') : '(any)'}`);
 
 	try {
 		const seeded = await seedDemoMatches();
