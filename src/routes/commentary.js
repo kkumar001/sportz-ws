@@ -1,12 +1,17 @@
 import { Router } from 'express';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../db/db.js';
-import { commentary } from '../db/schema.js';
+import { commentary, matches } from '../db/schema.js';
 import { createCommentarySchema, listCommentaryQuerySchema } from '../validation/commentary.js';
 import { matchIdParamSchema } from '../validation/matches.js';
 
 const commentaryRouter = Router({ mergeParams: true });
 const MAX_LIMIT = 100;
+
+async function findMatch(id) {
+    const [row] = await db.select().from(matches).where(eq(matches.id, id)).limit(1);
+    return row ?? null;
+}
 
 commentaryRouter.get('/', async (req, res) => {
     const parsedParams = matchIdParamSchema.safeParse(req.params);
@@ -24,6 +29,12 @@ commentaryRouter.get('/', async (req, res) => {
     const limit = Math.min(parsedQuery.data.limit ?? MAX_LIMIT, MAX_LIMIT);
 
     try {
+        const match = await findMatch(parsedParams.data.id);
+
+        if (!match) {
+            return res.status(404).json({ error: 'Match not found!' });
+        }
+
         const data = await db
             .select()
             .from(commentary)
@@ -51,6 +62,12 @@ commentaryRouter.post('/', async (req, res) => {
     }
 
     try {
+        const match = await findMatch(parsedParams.data.id);
+
+        if (!match) {
+            return res.status(404).json({ error: 'Match not found!' });
+        }
+
         const [event] = await db.insert(commentary).values({
             matchId: parsedParams.data.id,
             ...parsedBody.data
