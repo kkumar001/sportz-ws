@@ -8,6 +8,13 @@
       "when": 1787142033875,
       "tag": "0000_unique_daredevil",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787415431757,
+      "tag": "0001_cricket_wickets",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { wsArcjet } from '../arcjet.js';
+import { toPublicMatch } from '../utils/match-score.js';
 
 const matchSubscribers = new Map();
 
@@ -58,6 +59,7 @@ function handleMessage(socket, data) {
         message = JSON.parse(data.toString());
     } catch (e) {
         sendJSON(socket, { type: 'error', error: 'Invalid JSON format' });
+        return;
     }
 
     if (message?.type === 'subscribe' && Number.isInteger(message.matchId)) {
@@ -67,7 +69,7 @@ function handleMessage(socket, data) {
         return;
     }
 
-    if (message.type === 'unsubscribe' && message.matchId) {
+    if (message?.type === 'unsubscribe' && Number.isInteger(message.matchId)) {
         unsubscribeFromMatch(socket, message.matchId);
         socket.subscriptions.delete(message.matchId);
         sendJSON(socket, { type: 'unsubscribed', matchId: message.matchId });
@@ -151,12 +153,31 @@ export function attachWebSocketServer(server) {
     });
 
     function broadcastMatchCreated(match) {
-        broadcastToAll(wss, { type: 'match_created', data: match });
+        broadcastToAll(wss, { type: 'match_created', data: toPublicMatch(match) });
+    }
+
+    function broadcastMatchUpdated(match) {
+        broadcastToAll(wss, { type: 'match_updated', data: toPublicMatch(match) });
+    }
+
+    function broadcastScoreUpdated(match) {
+        broadcastToAll(wss, { type: 'score_updated', data: toPublicMatch(match) });
     }
 
     function broadcastCommentary(matchId, comment) {
         broadcastToMatch(matchId, { type: 'commentary_created', data: comment });
     }
 
-    return { broadcastMatchCreated, broadcastCommentary };
+    function broadcastSimulator(type, data) {
+        const payload = data?.match ? { ...data, match: toPublicMatch(data.match) } : data;
+        broadcastToAll(wss, { type, data: payload });
+    }
+
+    return {
+        broadcastMatchCreated,
+        broadcastMatchUpdated,
+        broadcastScoreUpdated,
+        broadcastCommentary,
+        broadcastSimulator,
+    };
 }

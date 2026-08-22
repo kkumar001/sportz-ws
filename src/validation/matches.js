@@ -8,6 +8,8 @@ export const MATCH_STATUS = {
 
 export const listMatchesQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
+  sport: z.string().trim().min(1).optional(),
+  status: z.enum([MATCH_STATUS.SCHEDULED, MATCH_STATUS.LIVE, MATCH_STATUS.FINISHED]).optional(),
 });
 
 export const matchIdParamSchema = z.object({
@@ -25,6 +27,8 @@ export const createMatchSchema = z
     endTime: isoDateStringSchema,
     homeScore: z.coerce.number().int().nonnegative().optional(),
     awayScore: z.coerce.number().int().nonnegative().optional(),
+    homeWickets: z.coerce.number().int().min(0).max(10).optional(),
+    awayWickets: z.coerce.number().int().min(0).max(10).optional(),
   })
   .superRefine(({ startTime, endTime }, context) => {
     if (new Date(endTime) <= new Date(startTime)) {
@@ -39,4 +43,6 @@ export const createMatchSchema = z
 export const updateScoreSchema = z.object({
   homeScore: z.coerce.number().int().nonnegative(),
   awayScore: z.coerce.number().int().nonnegative(),
+  homeWickets: z.coerce.number().int().min(0).max(10).optional(),
+  awayWickets: z.coerce.number().int().min(0).max(10).optional(),
 });

@@ -30,3 +30,11 @@ export async function syncMatchStatus(match, updateStatus) {
     }
     return match.status;
 }
+
+export function withDerivedStatus(match, now = new Date()) {
+    const nextStatus = getMatchStatus(match.startTime, match.endTime, now);
+    if (!nextStatus || match.status === nextStatus) {
+        return { match, changed: false };
+    }
+    return { match: { ...match, status: nextStatus }, changed: true };
+}
